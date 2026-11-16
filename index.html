@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="cs" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cesta k Ironman Emilia-Romagna 2027 | Endurance Cockpit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- HLAVIČKA APLIKACE -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-group">
+        <div class="brand-badge">140.6</div>
+        <div class="brand-title">
+          <h1>Cesta k Ironman Emilia-Romagna 2027</h1>
+          <div class="brand-subtitle">48týdenní makrocyklus (16. 11. 2026 – 17. 10. 2027) • Masters 50+ Endurance Cockpit</div>
+        </div>
+      </div>
+
+      <div class="countdown-strip">
+        <div class="countdown-pill">
+          <div>
+            <span class="countdown-label" id="next-event-label">Další milník / závod</span>
+            <span class="countdown-value mono" id="next-event-countdown">-- dnů</span>
+          </div>
+        </div>
+        <div class="countdown-pill primary-goal">
+          <div>
+            <span class="countdown-label">HLAVNÍ VRCHOL: IM Cervia (18. 9. 2027)</span>
+            <span class="countdown-value mono" id="main-race-countdown">-- dnů (-- týdnů)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn btn-sm" id="btn-theme-toggle" title="Přepnout tmavý / světlý režim">☀️ Světlý / 🌙 Tmavý</button>
+        <button class="btn btn-sm" id="btn-export-json" title="Stáhnout kompletní stav a upravený plán jako JSON">💾 Export JSON zálohy</button>
+        <label class="btn btn-sm" for="input-import-json" title="Nahrát JSON zálohu nebo aktualizaci bloku PLAN_DATA" style="cursor:pointer;">
+          📂 Import JSON aktualizace
+        </label>
+        <input type="file" id="input-import-json" accept=".json" style="display:none;" />
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVIGAČNÍ ZÁLOŽKY -->
+  <nav class="nav-bar">
+    <div class="nav-inner">
+      <button class="nav-tab active" data-tab="tab-dashboard">📊 A. Hlavní přehled (Dashboard)</button>
+      <button class="nav-tab" data-tab="tab-planner">📅 B. Týdenní plánovač (T01–T48)</button>
+      <button class="nav-tab" data-tab="tab-garmin">⌚ D. Garmin CSV &amp; AI Trenér</button>
+      <button class="nav-tab" data-tab="tab-pacing">⚡ E. Závodní strategie &amp; Výživa</button>
+      <button class="nav-tab" data-tab="tab-zones">🎯 Zóny, Profil &amp; Baseline</button>
+    </div>
+  </nav>
+
+  <!-- HLAVNÍ OBSAH -->
+  <main class="app-main">
+    <!-- ====================================================================
+         SEKCE A: HLAVNÍ PŘEHLED (EXECUTIVE DASHBOARD)
+         ==================================================================== -->
+    <section id="tab-dashboard" class="tab-panel active">
+      <div class="dashboard-top-grid">
+        <!-- Karta aktivního týdne -->
+        <div class="card" style="margin-bottom:0;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span>🎯 Aktivní týden v kokpitu</span>
+                <span class="badge badge-race-c" id="dash-week-block-badge">Detailní blok</span>
+              </div>
+              <div class="card-subtitle" id="dash-week-dates">16. 11. – 22. 11. 2026</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <label for="dash-week-select" style="font-size:0.78rem; color:var(--text-muted);">Přepnout týden:</label>
+              <select id="dash-week-select" class="mono" style="padding:6px 10px; border-radius:6px; background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border-color);"></select>
+              <button class="btn btn-primary btn-sm" id="btn-open-week-detail">Otevřít denní rozpis →</button>
+            </div>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-box">
+              <span class="kpi-label">Plánovaný objem</span>
+              <div class="kpi-val mono" id="dash-kpi-plan">5,25 h</div>
+              <div class="kpi-sub" id="dash-kpi-type">Typ: Build</div>
+            </div>
+            <div class="kpi-box">
+              <span class="kpi-label">Odtrénováno (Den. log / CSV)</span>
+              <div class="kpi-val mono" id="dash-kpi-actual">0,00 h</div>
+              <div class="kpi-sub" id="dash-kpi-compliance">Plnění: 0 %</div>
+            </div>
+            <div class="kpi-box">
+              <span class="kpi-label">Rozpad hodin (P / K / B / S)</span>
+              <div class="kpi-val mono" style="font-size:1.02rem;" id="dash-kpi-split">1,5 / 1,75 / 1,0 / 1,0</div>
+              <div class="kpi-sub">Plavání / Kolo / Běh / Síla</div>
+            </div>
+            <div class="kpi-box">
+              <span class="kpi-label">Fáze makrocyklu</span>
+              <div class="kpi-val" style="font-size:0.95rem;" id="dash-kpi-phase">Fáze 1</div>
+              <div class="kpi-sub" id="dash-kpi-recovery">Standardní zátěž</div>
+            </div>
+          </div>
+
+          <div class="day-prescription" id="dash-week-focus"></div>
+        </div>
+
+        <!-- Rychlý Semafor regenerace a zad -->
+        <div class="card" style="margin-bottom:0;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🚦 Semafor regenerace a zad (Ranní check-in)</div>
+              <div class="card-subtitle">Baseline: Noční HRV = 40 ms | Klidová TF = 49 bpm | Prům. spánek = 6,7 h</div>
+            </div>
+          </div>
+
+          <div class="semafor-controls">
+            <div class="control-group">
+              <label for="sem-hrv">Dnešní noční HRV (ms)</label>
+              <input type="number" id="sem-hrv" class="mono" min="15" max="90" step="1" value="41" />
+            </div>
+            <div class="control-group">
+              <label for="sem-sleep">Spánek (hodiny)</label>
+              <input type="number" id="sem-sleep" class="mono" min="3" max="12" step="0.25" value="6.75" />
+            </div>
+            <div class="control-group">
+              <label for="sem-back">Stav beder (1 = OK, 5 = Bolest)</label>
+              <select id="sem-back">
+                <option value="1">1 – Naprosto bez potíží</option>
+                <option value="2">2 – Mírná ztuhlost po ránu</option>
+                <option value="3">3 – Citlivá bedra při předklonu</option>
+                <option value="4">4 – Výrazná bolest v bedrech</option>
+                <option value="5">5 – Akutní blokáda / bolest</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="semafor-output" class="semafor-result">
+            <div class="semafor-title" id="sem-status-title">🟢 ZELENÁ: Trénink na 100 % dle plánu</div>
+            <div class="semafor-desc" id="sem-status-desc">HRV je na úrovni osobní baseline (40 ms) a bedra jsou klidná. Můžeš odjet plnou strukturu včetně TT aero úseků.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interaktivní graf celoročního objemu T01-T48 -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📈 Roční makrocyklus T01–T48: Plán vs. Skutečnost (Kliknutím na sloupec otevřeš týden)</div>
+            <div class="card-subtitle">Barevný sloupec = Plánované hodiny dle disciplíny | Úzký kontrastní sloupec vpravo = Odtrénovaná skutečnost (Den. log / Garmin CSV)</div>
+          </div>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:var(--col-swim)"></span>Plavání</span>
+            <span class="legend-item"><span class="legend-dot" style="background:var(--col-bike)"></span>Kolo</span>
+            <span class="legend-item"><span class="legend-dot" style="background:var(--col-run)"></span>Běh</span>
+            <span class="legend-item"><span class="legend-dot" style="background:var(--col-strength)"></span>Síla/Core</span>
+            <span class="legend-item"><span class="legend-dot" style="background:var(--text-primary)"></span>Skutečnost</span>
+            <span class="legend-item"><span class="badge badge-race-a">A</span>IM Cervia</span>
+            <span class="legend-item"><span class="badge badge-race-b">B</span>Maraton / L'Etape / 70.3 HK</span>
+            <span class="legend-item"><span class="badge badge-race-c">C</span>Testovací závody</span>
+          </div>
+        </div>
+
+        <div class="macro-chart-wrapper">
+          <div id="macro-chart-bars" class="macro-bars"></div>
+        </div>
+      </div>
+
+      <!-- Přehled 6 fází a 10 klíčových událostí/závodů -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🗓️ 6 Fází 48týdenního makrocyklu</div>
+          </div>
+          <div id="phases-list-container" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🏆 Termínovka závodů a plánovaných soustředění / dovolených</div>
+          </div>
+          <div id="events-list-container" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         SEKCE B: DETAILNÍ TÝDENNÍ PLÁNOVAČ & KLOUZAVÝ ROZPIS DNŮ (Po–Ne)
+         ==================================================================== -->
+    <section id="tab-planner" class="tab-panel">
+      <div class="week-selector-bar">
+        <div class="week-nav-controls">
+          <button class="btn btn-sm" id="btn-prev-week">◀ Předchozí týden</button>
+          <select id="planner-week-select" class="mono" style="padding:7px 12px; font-weight:700; border-radius:6px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-color);"></select>
+          <button class="btn btn-sm" id="btn-next-week">Další týden ▶</button>
+          <span class="badge badge-race-c" id="planner-block-badge">Detailní aktivní blok (T01–T12)</span>
+        </div>
+
+        <div class="week-nav-controls">
+          <button class="btn btn-primary btn-sm" id="btn-api-push-week" title="Automaticky nahraje celý vybraný týden přímo do kalendáře Intervals.icu přes API">🚀 Nahrát týden do Intervals.icu (API)</button>
+          <button class="btn btn-sm" id="btn-export-week-icu">⚙️ Nastavení API &amp; Textový export</button>
+          <button class="btn btn-sm" id="btn-open-icu-guide">❓ Kde získat API klíč</button>
+        </div>
+      </div>
+
+      <div class="card" id="planner-week-summary-card"></div>
+
+      <div id="planner-days-grid" class="days-grid"></div>
+    </section>
+
+    <!-- ====================================================================
+         SEKCE D: IMPORTÉR ACTIVITIES.CSV Z GARMINU & AI TRENÉR
+         ==================================================================== -->
+    <section id="tab-garmin" class="tab-panel">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📥 Importér českého Garmin Connect CSV (`Activities.csv`)</div>
+              <div class="card-subtitle">Automaticky ošetřuje desetinné čárky (běh/kolo) i tečky jako oddělovače tisíců u metrů (plavání/veslování)</div>
+            </div>
+          </div>
+
+          <div id="csv-dropzone" class="dropzone">
+            <div style="font-size:1.8rem; margin-bottom:6px;">📂</div>
+            <div style="font-weight:700; margin-bottom:4px;">Přetáhni sem soubor `Activities.csv` z českého Garmin Connectu</div>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">nebo klikni pro výběr souboru z disku</div>
+            <input type="file" id="input-csv-file" accept=".csv,text/csv" style="display:none;" />
+            <span class="btn btn-primary btn-sm">Vybrat soubor Activities.csv</span>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:0.84rem; cursor:pointer;">
+              <input type="checkbox" id="chk-include-walk" />
+              <span>Započítat aktivitu <strong>Chůze</strong> (vícedenní treky) do celkového odtrénovaného objemu</span>
+            </label>
+            <button class="btn btn-sm" id="btn-reload-default-csv">🔄 Načíst přiložené Activities.csv (280 aktivit)</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🤖 Generátor podkladu pro úpravu plánu (AI Prompt)</div>
+              <div class="card-subtitle">Jedním kliknutím vytvoří strukturovaný report posledních 2–4 týdnů pro aktualizaci PLAN_DATA</div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <select id="ai-prompt-weeks-count" style="padding:5px 8px; background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border-color); border-radius:6px; font-size:0.8rem;">
+                <option value="2">Poslední 2 týdny</option>
+                <option value="4" selected>Poslední 4 týdny</option>
+              </select>
+              <button class="btn btn-primary btn-sm" id="btn-generate-ai-prompt">✨ Vygenerovat &amp; Zkopírovat AI Prompt</button>
+            </div>
+          </div>
+
+          <textarea id="ai-prompt-textarea" class="code-block" rows="7" style="width:100%; resize:vertical;" readonly placeholder="Klikni na 'Vygenerovat & Zkopírovat AI Prompt' pro sestavení reportu..."></textarea>
+        </div>
+      </div>
+
+      <!-- Souhrn spárovaných dat z Activities.csv -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📊 Statistika načteného souboru `Activities.csv`</div>
+            <div class="card-subtitle" id="csv-stats-subtitle">Načteno 280 aktivit</div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <label for="csv-filter-discipline" style="font-size:0.78rem; color:var(--text-muted);">Filtr disciplíny:</label>
+            <select id="csv-filter-discipline" style="padding:5px 10px; background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border-color); border-radius:6px; font-size:0.82rem;">
+              <option value="all">Všechny aktivity</option>
+              <option value="swim">Plavání (bazén + volná voda)</option>
+              <option value="bike">Cyklistika</option>
+              <option value="run">Běh (venku + pás)</option>
+              <option value="multisport">Multisport / Triatlon</option>
+              <option value="strength">Síla, HIIT &amp; Jóga</option>
+              <option value="other">Ostatní (Veslování, Běžky, Inline)</option>
+              <option value="walk">Chůze &amp; Treky</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="csv-summary-kpis" class="kpi-grid"></div>
+
+        <div class="data-table-wrap" style="max-height:420px; overflow-y:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Typ v Garminu</th>
+                <th>Kategorie</th>
+                <th>Název</th>
+                <th>Vzdálenost (přepočtená)</th>
+                <th>Čas</th>
+                <th>Tempo / Rychlost</th>
+                <th>Prům. TF</th>
+                <th>Výkon (W)</th>
+                <th>Týden plánu</th>
+              </tr>
+            </thead>
+            <tbody id="csv-activities-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         SEKCE E: KALKULAČKA ZÁVODNÍ STRATEGIE A VÝŽIVY (RACE PACING & FUELING)
+         ==================================================================== -->
+    <section id="tab-pacing" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">⚡ Interaktivní kalkulačka závodní strategie, mezičasů a výživy</div>
+            <div class="card-subtitle">Vyber jeden z 5 klíčových závodů sezóny 2027 a uprav posuvníky tempa, rychlosti, tepů/wattů a sacharidů</div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;" id="race-calc-selector">
+            <button class="btn btn-sm active btn-primary" data-race="im-cervia">🅰️ IM Emilia-Romagna (140.6)</button>
+            <button class="btn btn-sm" data-race="703-hk">🅱️ IM 70.3 Hradec Králové</button>
+            <button class="btn btn-sm" data-race="letape-cz">🅱️ L'Etape Czech Republic (100 km)</button>
+            <button class="btn btn-sm" data-race="maraton-praha">🅱️ Vodafone Maraton Praha</button>
+            <button class="btn btn-sm" data-race="hm-praha">🅲 Generali Půlmaraton Praha</button>
+          </div>
+        </div>
+
+        <div id="race-calculator-body"></div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         SEKCE: ZÓNY, PROFIL SPORTOVCE & VÝCHOZÍ GARMIN ANALÝZA
+         ==================================================================== -->
+    <section id="tab-zones" class="tab-panel">
+      <div class="grid-2">
+        <!-- Nastavení prahů a automatická kalkulačka zón -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">⚙️ Fyziologické prahy &amp; Automatická kalkulačka zón</div>
+              <div class="card-subtitle">Změň LTHR, FTP nebo CSS a všechny tréninkové zóny se okamžitě přepočítají a uloží</div>
+            </div>
+            <button class="btn btn-sm" id="btn-reset-thresholds">Obnovit výchozí prahy</button>
+          </div>
+
+          <div class="semafor-controls">
+            <div class="control-group">
+              <label for="input-lthr">Běžecký LTHR (bpm)</label>
+              <input type="number" id="input-lthr" class="mono" min="120" max="190" value="154" />
+            </div>
+            <div class="control-group">
+              <label for="input-ftp">Cyklistické FTP (Watty)</label>
+              <input type="number" id="input-ftp" class="mono" min="100" max="400" value="217" />
+            </div>
+            <div class="control-group">
+              <label for="input-css">Plavecké CSS (sekundy / 100 m)</label>
+              <input type="number" id="input-css" class="mono" min="80" max="240" value="148" />
+              <small style="color:var(--text-muted); font-size:0.72rem;" id="css-formatted-hint">148 s = 2:28 / 100 m</small>
+            </div>
+          </div>
+
+          <div id="zones-tables-container" style="display:flex; flex-direction:column; gap:14px;"></div>
+        </div>
+
+        <!-- Profil sportovce, kritické pravidlo zad a výchozí analýza -->
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">👤 Profil sportovce &amp; Kritické zdravotní pravidlo</div>
+            </div>
+            <div id="athlete-profile-box"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🔍 Výchozí analýza z historie Garmin (Říjen 2025 – Říjen 2026)</div>
+            </div>
+            <div id="baseline-analysis-box" style="display:flex; flex-direction:column; gap:10px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODÁLNÍ OKNO PRO INTERVALS.ICU EXPORT A NÁVOD -->
+  <div class="modal-backdrop" id="modal-icu">
+    <div class="modal-box">
+      <div class="card-header">
+        <div class="card-title" id="modal-icu-title">Integrace s Intervals.icu &amp; Hodinkami Garmin</div>
+        <button class="btn btn-sm" id="btn-close-modal">✕ Zavřít</button>
+      </div>
+      <div id="modal-icu-content"></div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFIKACE -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- SKRIPTY (Čisté modulární JS bez nutnosti bundleru) -->
+  <script src="plan-data.js"></script>
+  <script src="csv-parser.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
